@@ -11,6 +11,7 @@ Automatizar a análise de reclamações do canal "Fale com a ANAC" usando RAG.
 
 ## 🚀 Como Executar (Informações para Avaliação)
 Links e Acessos
+
 •	Apresentação: [https://gamma.app/docs/Documentacao-do-Chatbot-RAG-Atendimento-de-Reclamacoes-Aereas-rpo6dr1canbqshh]
 
 •	Deploy do Chatbot: [https://azkzpvcunzrre2pplqnluc.streamlit.app/]
