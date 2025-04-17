@@ -17,7 +17,7 @@ Links e Acessos
 •	Deploy do Chatbot: [https://azkzpvcunzrre2pplqnluc.streamlit.app/]
 
 •	Repositório GitHub **Branch em revisão**: [revisao-b98b2c4]
-: [[https://github.com/claudiorcorreias/GenAI/edit/revisao-b98b2c4/README.md]]
+https://github.com/claudiorcorreias/GenAI/tree/revisao-b98b2c4
 
 ## 📊 Resultados Esperados
 - Redução de 60% no tempo de análise manual
