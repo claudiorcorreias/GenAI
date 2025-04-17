@@ -75,6 +75,5 @@ if query:
         st.write("**Resposta:**", answer)
         
         # Limpar campo após resposta
-        if st.button("Fazer nova pergunta"):
-            st.session_state.input_pergunta = ""
-            st.experimental_rerun()
+        st.session_state.input_pergunta = ""
+        st.experimental_rerun()
