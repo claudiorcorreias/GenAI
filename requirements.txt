@@ -1,15 +1,6 @@
-# Dependências principais
-langchain-community>=0.0.34
-chromadb>=0.4.15
-pysqlite3-binary>=0.5.0  # Adicione esta linha
-
-# Processamento de PDF
-pypdf>=3.0.0
-
-# OpenAI
-langchain-openai>=0.0.1
-openai>=1.0.0
-
-# Gerenciamento de ambiente
-python-dotenv>=1.0.0
-tiktoken>=0.5.1
+streamlit
+PyPDF2
+langchain
+langchain-openai
+langchain-community
+faiss-cpu
