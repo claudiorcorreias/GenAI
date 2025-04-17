@@ -1,4 +1,13 @@
 import streamlit as st
+# Inicialização do estado da sessão (antes de qualquer widget)
+# Inicialização segura do session_state
+if 'input_pergunta' not in st.session_state:
+    st.session_state.input_pergunta = ""
+if 'last_query' not in st.session_state:
+    st.session_state.last_query = ""
+if 'vector_store' not in st.session_state:
+    st.session_state.vector_store = None
+
 from dotenv import load_dotenv
 import os
 from PyPDF2 import PdfReader
@@ -19,13 +28,6 @@ if not OPENAI_API_KEY:
     st.error("⚠️ Chave da OpenAI não encontrada. Verifique seu arquivo .env ou Secrets.")
     st.stop()
 
-# Inicialização segura do session_state
-if 'input_pergunta' not in st.session_state:
-    st.session_state.input_pergunta = ""
-if 'last_query' not in st.session_state:
-    st.session_state.last_query = ""
-if 'vector_store' not in st.session_state:
-    st.session_state.vector_store = None
 
 # Funções RAG
 @st.cache_resource(show_spinner="Processando PDF...")
@@ -95,11 +97,6 @@ st.text_input(
     placeholder="Ex: Quais meus direitos em caso de atraso?"
 )
 
-# Botão de limpar
-if st.button("Limpar"):
-    st.session_state.input_pergunta = ""
-    st.session_state.last_query = ""
-    st.rerun()
 
 # Processamento da consulta
 if st.session_state.last_query:
