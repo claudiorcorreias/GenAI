@@ -13,7 +13,8 @@ Automatizar a análise de reclamações do canal "Fale com a ANAC" usando RAG.
 Links e Acessos
 •	Apresentação: [https://gamma.app/docs/Documentacao-do-Chatbot-RAG-Atendimento-de-Reclamacoes-Aereas-rpo6dr1canbqshh]
 •	Deploy do Chatbot: [https://azkzpvcunzrre2pplqnluc.streamlit.app/]
-•	Repositório GitHub: [https://github.com/claudiorcorreias/GenAI]
+•	Repositório GitHub **Branch em revisão**: [revisao-b98b2c4]
+: [[https://github.com/claudiorcorreias/GenAI/edit/revisao-b98b2c4]]
 
 ## 📊 Resultados Esperados
 - Redução de 60% no tempo de análise manual
