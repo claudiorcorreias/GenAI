@@ -1,80 +1,102 @@
-import streamlit as st
-from dotenv import load_dotenv
-import os
-from PyPDF2 import PdfReader
-from langchain.text_splitter import RecursiveCharacterTextSplitter
-from langchain_community.embeddings import OpenAIEmbeddings
-from langchain_community.vectorstores import FAISS
-from langchain.chains import RetrievalQA
-from langchain_openai import ChatOpenAI
+# Adicione este CSS personalizado no início do seu app
+st.markdown("""
+<style>
+    /* Cores principais */
+    :root {
+        --primary: #2563EB;  /* Azul vibrante */
+        --secondary: #7C3AED; /* Roxo suave */
+        --background: #F8FAFC; /* Fundo claro */
+        --text: #1E293B;      /* Texto escuro */
+        --accent: #10B981;    /* Verde fresco */
+    }
+    
+    /* Estilos gerais */
+    .stApp {
+        background-color: var(--background);
+    }
+    
+    h1 {
+        color: var(--primary) !important;
+        border-bottom: 2px solid var(--secondary);
+        padding-bottom: 10px;
+    }
+    
+    .stButton>button {
+        background-color: var(--primary) !important;
+        color: white !important;
+        border-radius: 8px !important;
+        transition: all 0.3s;
+    }
+    
+    .stButton>button:hover {
+        background-color: var(--secondary) !important;
+        transform: scale(1.02);
+    }
+    
+    .stTextInput>div>div>input {
+        border: 2px solid var(--primary) !important;
+        border-radius: 8px !important;
+    }
+    
+    /* Cards de perguntas */
+    .question-card {
+        background: linear-gradient(135deg, #E0F2FE 0%, #F0FDF4 100%);
+        border-left: 4px solid var(--accent);
+        padding: 15px;
+        border-radius: 8px;
+        margin: 10px 0;
+    }
+    
+    /* Rodapé */
+    footer {
+        color: var(--text);
+        opacity: 0.8;
+        font-size: 0.9em;
+        text-align: center;
+        margin-top: 30px;
+    }
+</style>
+""", unsafe_allow_html=True)
 
-# Configuração da página
-st.set_page_config(page_title="Chatbot ANAC - RAG", page_icon="✈️")
+# Interface principal (substitua a seção atual)
+st.title("✈️ Chatbot ANAC - Atendimento de Reclamações Aéreas")
 
-# Carregar variáveis de ambiente
-load_dotenv()
-OPENAI_API_KEY = os.getenv("OPENAI_API_KEY") or st.secrets.get("OPENAI_API_KEY")
+# Container com fundo diferenciado
+with st.container():
+    st.markdown("""
+    <div style='background: linear-gradient(135deg, #2563EB10 0%, #7C3AED10 100%); 
+                padding: 20px; 
+                border-radius: 12px;
+                margin-bottom: 30px;'>
+        <h3 style='color: #2563EB;'>Como posso ajudar hoje?</h3>
+        <p>Explore suas dúvidas sobre direitos do passageiro, reclamações e regulamentações aéreas.</p>
+    </div>
+    """, unsafe_allow_html=True)
 
-if not OPENAI_API_KEY:
-    st.error("⚠️ Chave da OpenAI não encontrada. Verifique seu arquivo .env ou Secrets.")
-    st.stop()
+# Seção de perguntas sugeridas (atualizada)
+st.subheader("🔍 Perguntas Frequentes")
+cols = st.columns(2)
+for i, pergunta in enumerate(perguntas_sugeridas):
+    with cols[i % 2]:
+        st.markdown(f"""
+        <div class='question-card'>
+            <p style='font-weight: 500; margin-bottom: 5px;'>{pergunta}</p>
+            <button onclick='window._stcore.setQueryInput("{pergunta}")' 
+                    style='background: transparent; 
+                           border: 1px solid { "#2563EB" if i%2==0 else "#7C3AED" }; 
+                           color: { "#2563EB" if i%2==0 else "#7C3AED" };
+                           padding: 5px 10px;
+                           border-radius: 6px;
+                           cursor: pointer;'>
+                Usar esta pergunta
+            </button>
+        </div>
+        """, unsafe_allow_html=True)
 
-# Inicializar session_state
-if 'input_pergunta' not in st.session_state:
-    st.session_state.input_pergunta = ""
-
-# Funções RAG
-def load_pdf(file_path):
-    reader = PdfReader(file_path)
-    return " ".join([page.extract_text() for page in reader.pages])
-
-def process_text(text):
-    splitter = RecursiveCharacterTextSplitter(chunk_size=1000, chunk_overlap=200)
-    return splitter.split_text(text)
-
-def create_vector_store(chunks, api_key):
-    embeddings = OpenAIEmbeddings(openai_api_key=api_key)
-    return FAISS.from_texts(chunks, embeddings)
-
-def get_answer(query, vector_store, api_key):
-    llm = ChatOpenAI(model="gpt-3.5-turbo", temperature=0.7, openai_api_key=api_key)
-    qa_chain = RetrievalQA.from_chain_type(
-        llm=llm,
-        chain_type="stuff",
-        retriever=vector_store.as_retriever(search_kwargs={"k": 3}),
-    )
-    return qa_chain.run(query)
-
-# Interface principal
-st.title("Chatbot ANAC - Atendimento de Reclamações Aéreas")
-st.write("""
-**Instruções:**  
-- Digite sua pergunta sobre direitos do passageiro (ex: "Quais os direitos em caso de cancelamento?").  
-- Para encerrar, digite **'sair'**.  
-""")
-
-# Carregar PDF e criar vetor store
-PDF_PATH = "Chatbot_SAC.pdf"
-if os.path.exists(PDF_PATH):
-    text = load_pdf(PDF_PATH)
-    chunks = process_text(text)
-    vector_store = create_vector_store(chunks, OPENAI_API_KEY)
-    st.success("✅ PDF carregado com sucesso!")
-else:
-    st.error(f"⚠️ Arquivo {PDF_PATH} não encontrado.")
-    st.stop()
-
-# Campo de pergunta com tratamento de estado
-query = st.text_input("Digite sua pergunta:", value=st.session_state.input_pergunta, key="input_pergunta")
-
-if query:
-    if query.lower() == "sair":
-        st.stop()
-    else:
-        answer = get_answer(query, vector_store, OPENAI_API_KEY)
-        st.write("**Resposta:**", answer)
-        
-        # Limpar campo após resposta
-        if st.button("Fazer nova pergunta"):
-            st.session_state.input_pergunta = ""
-            st.experimental_rerun()
+# Rodapé personalizado
+st.markdown("""
+<footer>
+    ✈️ Chatbot oficial para consultas ANAC | 
+    <span style='color: var(--accent)'>Digite 'sair' a qualquer momento</span>
+</footer>
+""", unsafe_allow_html=True)
