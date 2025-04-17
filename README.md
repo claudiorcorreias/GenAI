@@ -14,10 +14,14 @@ Links e Acessos
 
 •	Apresentação: [https://gamma.app/docs/Documentacao-do-Chatbot-RAG-Atendimento-de-Reclamacoes-Aereas-rpo6dr1canbqshh]
 
+•	Documentação: [‘Chatbot com Retrieval-Augmented Generation (RAG).pdf’]
+
 •	Deploy do Chatbot: [https://azkzpvcunzrre2pplqnluc.streamlit.app/]
 
-•	Repositório GitHub **Branch em revisão**: [revisao-b98b2c4]
-https://github.com/claudiorcorreias/GenAI/tree/revisao-b98b2c4
+•	Base de Dados: [‘Chatbot_SAC.pdf’]
+
+•	Repositório GitHub: [https://github.com/claudiorcorreias/GenAI/tree/revisao-b98b2c4]
+
 
 ## 📊 Resultados Esperados
 - Redução de 60% no tempo de análise manual
