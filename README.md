@@ -9,16 +9,19 @@ Automatizar a análise de reclamações do canal "Fale com a ANAC" usando RAG.
 - **Vectorstore**: FAISS
 - **Framework**: LangChain
 
-## 🚀 Como Executar
-1. Instale as dependências:
-   ```bash
-   pip install -r requirements.txt
-   ```
-2. Configure sua chave OpenAI no arquivo `info.env`
-3. Execute:
-   ```bash
-   streamlit run app.py
-   ```
+## 🚀 Como Executar (Informações para Avaliação)
+Links e Acessos
+
+•	Apresentação: [https://gamma.app/docs/Documentacao-do-Chatbot-RAG-Atendimento-de-Reclamacoes-Aereas-rpo6dr1canbqshh]
+
+•	Documentação: [‘Chatbot com Retrieval-Augmented Generation (RAG).pdf’]
+
+•	Deploy do Chatbot: [https://azkzpvcunzrre2pplqnluc.streamlit.app/]
+
+•	Base de Dados: [‘Chatbot_SAC.pdf’]
+
+•	Repositório GitHub: [https://github.com/claudiorcorreias/GenAI/tree/revisao-b98b2c4]
+
 
 ## 📊 Resultados Esperados
 - Redução de 60% no tempo de análise manual

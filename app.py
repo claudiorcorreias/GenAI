@@ -1,4 +1,13 @@
 import streamlit as st
+# Inicialização do estado da sessão (antes de qualquer widget)
+# Inicialização segura do session_state
+if 'input_pergunta' not in st.session_state:
+    st.session_state.input_pergunta = ""
+if 'last_query' not in st.session_state:
+    st.session_state.last_query = ""
+if 'vector_store' not in st.session_state:
+    st.session_state.vector_store = None
+
 from dotenv import load_dotenv
 import os
 from PyPDF2 import PdfReader
@@ -19,30 +28,36 @@ if not OPENAI_API_KEY:
     st.error("⚠️ Chave da OpenAI não encontrada. Verifique seu arquivo .env ou Secrets.")
     st.stop()
 
-# Inicializar session_state
-if 'input_pergunta' not in st.session_state:
-    st.session_state.input_pergunta = ""
 
 # Funções RAG
-def load_pdf(file_path):
+@st.cache_resource(show_spinner="Processando PDF...")
+def load_and_process_pdf(file_path):
+    """Carrega e processa o PDF apenas uma vez"""
     reader = PdfReader(file_path)
-    return " ".join([page.extract_text() for page in reader.pages])
-
-def process_text(text):
+    text = " ".join([page.extract_text() for page in reader.pages])
+    
     splitter = RecursiveCharacterTextSplitter(chunk_size=1000, chunk_overlap=200)
-    return splitter.split_text(text)
+    chunks = splitter.split_text(text)
+    
+    embeddings = OpenAIEmbeddings(openai_api_key=OPENAI_API_KEY)
+    vector_store = FAISS.from_texts(chunks, embeddings)
+    
+    return vector_store
 
-def create_vector_store(chunks, api_key):
-    embeddings = OpenAIEmbeddings(openai_api_key=api_key)
-    return FAISS.from_texts(chunks, embeddings)
-
-def get_answer(query, vector_store, api_key):
-    llm = ChatOpenAI(model="gpt-3.5-turbo", temperature=0.7, openai_api_key=api_key)
+def get_answer(query, vector_store):
+    """Obtém resposta usando a cadeia RAG"""
+    llm = ChatOpenAI(
+        model="gpt-3.5-turbo",
+        temperature=0.7,
+        openai_api_key=OPENAI_API_KEY
+    )
+    
     qa_chain = RetrievalQA.from_chain_type(
         llm=llm,
         chain_type="stuff",
         retriever=vector_store.as_retriever(search_kwargs={"k": 3}),
     )
+    
     return qa_chain.run(query)
 
 # Interface principal
@@ -53,28 +68,65 @@ st.write("""
 - Para encerrar, digite **'sair'**.  
 """)
 
-# Carregar PDF e criar vetor store
-PDF_PATH = "Chatbot_SAC.pdf"
-if os.path.exists(PDF_PATH):
-    text = load_pdf(PDF_PATH)
-    chunks = process_text(text)
-    vector_store = create_vector_store(chunks, OPENAI_API_KEY)
-    st.success("✅ PDF carregado com sucesso!")
-else:
-    st.error(f"⚠️ Arquivo {PDF_PATH} não encontrado.")
-    st.stop()
+# Carregar PDF e criar vetor store (apenas uma vez)
+if st.session_state.vector_store is None:
+    PDF_PATH = "Chatbot_SAC.pdf"
+    if os.path.exists(PDF_PATH):
+        try:
+            st.session_state.vector_store = load_and_process_pdf(PDF_PATH)
+            st.success("✅ Base de conhecimento carregada com sucesso!")
+        except Exception as e:
+            st.error(f"⚠️ Erro ao processar o PDF: {str(e)}")
+            st.stop()
+    else:
+        st.error(f"⚠️ Arquivo {PDF_PATH} não encontrado.")
+        st.stop()
+
+# Widget controlado para input
+def submit_query():
+    """Callback para envio da pergunta"""
+    st.session_state.last_query = st.session_state.input_pergunta
+    st.session_state.input_pergunta = ""
 
 # Campo de pergunta com tratamento de estado
-query = st.text_input("Digite sua pergunta:", value=st.session_state.input_pergunta, key="input_pergunta")
+st.text_input(
+    "Digite sua pergunta:",
+    value=st.session_state.input_pergunta,
+    key="input_pergunta",
+    on_change=submit_query,
+    placeholder="Ex: Quais meus direitos em caso de atraso?"
+)
 
-if query:
-    if query.lower() == "sair":
+
+# Processamento da consulta
+if st.session_state.last_query:
+    if st.session_state.last_query.lower() == "sair":
+        st.info("Atendimento encerrado. Obrigado!")
         st.stop()
     else:
-        answer = get_answer(query, vector_store, OPENAI_API_KEY)
-        st.write("**Resposta:**", answer)
-        
-        # Limpar campo após resposta
-        if st.button("Fazer nova pergunta"):
-            st.session_state.input_pergunta = ""
-            st.experimental_rerun()
+        with st.spinner("Processando sua pergunta..."):
+            try:
+                answer = get_answer(
+                    st.session_state.last_query,
+                    st.session_state.vector_store
+                )
+                st.write("**Sua pergunta:**", st.session_state.last_query)
+                st.write("**Resposta:**", answer)
+                
+                # Adiciona ao histórico
+                if 'history' not in st.session_state:
+                    st.session_state.history = []
+                st.session_state.history.append(
+                    (st.session_state.last_query, answer)
+                )
+                
+            except Exception as e:
+                st.error(f"⚠️ Erro ao processar sua pergunta: {str(e)}")
+
+# Exibir histórico se existir
+if 'history' in st.session_state and st.session_state.history:
+    with st.expander("📜 Histórico de Conversas"):
+        for i, (q, a) in enumerate(st.session_state.history, 1):
+            st.write(f"**Consulta {i}:** {q}")
+            st.write(f"**Resposta {i}:** {a}")
+            st.write("---")
