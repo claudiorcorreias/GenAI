@@ -5,19 +5,19 @@ from langchain_community.embeddings import OpenAIEmbeddings
 from langchain_community.vectorstores import FAISS
 from langchain.chains import RetrievalQA
 from langchain_openai import ChatOpenAI
+import os
 
 # Configuração da página
 st.set_page_config(page_title="Chatbot ANAC - RAG", page_icon="✈️")
 
-# Sidebar (upload de PDF)
-with st.sidebar:
-    st.header("Configurações")
-    pdf_file = st.file_uploader("Carregue o PDF da ANAC", type="pdf")
-    openai_key = st.text_input("Insira sua API Key da OpenAI", type="password")
+# --- 1. REMOVER INPUTS MANUAIS ---
+# Carrega o PDF e a API Key automaticamente (ajuste os caminhos/conforme necessário)
+PDF_PATH = "Chatbot_SAC.pdf"  # Coloque o PDF no mesmo diretório do script
+OPENAI_API_KEY = st.secrets["OPENAI_API_KEY"]
 
-# Funções RAG (iguais ao seu código)
-def load_pdf(file):
-    reader = PdfReader(file)
+# --- FUNÇÕES RAG (MANTIDAS) ---
+def load_pdf(file_path):
+    reader = PdfReader(file_path)
     return " ".join([page.extract_text() for page in reader.pages])
 
 def process_text(text):
@@ -37,18 +37,33 @@ def get_answer(query, vector_store, api_key):
     )
     return qa_chain.run(query)
 
-# Interface principal
+# --- INTERFACE STREAMLIT ---
 st.title("Chatbot ANAC - Atendimento de Reclamações Aéreas")
-st.write("**Como usar**: Carregue o PDF da ANAC e faça perguntas sobre direitos do passageiro.")
+st.write("""
+**Instruções:**  
+- Digite sua pergunta sobre direitos do passageiro (ex: _"Quais os direitos em caso de cancelamento?"_).  
+- Para encerrar, digite **'sair'**.  
+""")
 
-if pdf_file and openai_key:
-    text = load_pdf(pdf_file)
+# Inicialização do vetor store (automática)
+if os.path.exists(PDF_PATH) and OPENAI_API_KEY:
+    text = load_pdf(PDF_PATH)
     chunks = process_text(text)
-    vector_store = create_vector_store(chunks, openai_key)
-    
-    query = st.text_input("Digite sua pergunta (ex: 'Quais os direitos em caso de cancelamento?')")
-    if query:
-        answer = get_answer(query, vector_store, openai_key)
-        st.write("**Resposta:**", answer)
+    vector_store = create_vector_store(chunks, OPENAI_API_KEY)
+    st.success("✅ PDF e API Key carregados com sucesso!")
 else:
-    st.warning("⚠️ Carregue um PDF e insira a API Key da OpenAI para começar.")
+    st.error("⚠️ Arquivo PDF ou API Key não encontrados. Verifique o caminho do PDF ou a chave da OpenAI.")
+
+# --- 2. CAMPO DE PERGUNTA + LIMPEZA APÓS RESPOSTA ---
+query = st.text_input("Digite sua pergunta:", key="input_pergunta")
+
+if query:
+    if query.lower() == "sair":
+        st.stop()  # Encerra o app
+    else:
+        answer = get_answer(query, vector_store, OPENAI_API_KEY)
+        st.write("**Resposta:**", answer)
+        
+        # --- 3. LIMPAR CAMPO APÓS RESPOSTA ---
+        st.session_state["input_pergunta"] = ""  # Reseta o input
+        st.rerun()  # Força a atualização da interface
